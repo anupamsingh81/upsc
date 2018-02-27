@@ -512,3 +512,48 @@ upm%>% filter(Name %in% repeaters) %>% filter(Rank<100) %>% arrange(Name,year) %
 
 
 
+#####3prop
+
+upm %>% filter(caste=="ST") %>% group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq))
+
+upm %>% #filter(caste=="ST") %>% 
+  group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq)) %>% 
+  mutate(cumulative=cumsum(freq)) %>% 
+  filter(cumulative<50)
+
+upm %>% filter(caste=="ST") %>% 
+  group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq)) %>% 
+  mutate(cumulative=cumsum(freq)) %>% 
+  filter(cumulative<50)
+
+upm %>% filter(caste=="General") %>% 
+  group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq)) %>% 
+  mutate(cumulative=cumsum(freq)) %>% 
+  filter(cumulative<50)
+
+
+
+upm %>% filter(caste=="OBC") %>% 
+  group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq)) %>% 
+  mutate(cumulative=cumsum(freq)) %>% 
+  filter(cumulative<50)
+
+
+upm %>% filter(caste=="SC") %>% 
+  group_by(surname) %>% 
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>% mutate(freq=round(100*freq,2)) %>% arrange(desc(freq)) %>% 
+  mutate(cumulative=cumsum(freq)) %>% 
+  filter(cumulative<50)
+
+
