@@ -1,10 +1,14 @@
 ---
-title: "UPSC"
+title: "Analysis of sources of variation in UPSC marks"
 author: "Anupam kumar Singh, MD"
 date: "26 February 2018"
 output: 
   html_document:
    code_folding: hide
+   toc: true
+   toc_depth: 3
+   toc_float: true
+   
 ---
 
 ```{r setup, include=FALSE}
@@ -13,12 +17,12 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
 ```
 
 
-Sometime back UPSC 2016 results were declared and amidst usual hype and hoopla, a blog post bty twitter handle yugaparivatan [claimed](http://yugaparivartan.com/2017/06/03/does-upsc-favours-muslims-in-ias-interview/), that higher interview marks were awarded to Muslims . Some people insinuated same was happening for female candidates and wondered if it was by design or random event. 
+Sometime back UPSC 2016 results were declared and amidst usual hype and hoopla, a blog post by twitter handle yugaparivatan [claimed](http://yugaparivartan.com/2017/06/03/does-upsc-favours-muslims-in-ias-interview/), that higher interview marks were awarded to Muslims . I was intrigued at that time and decided to analyse whole dataset later. 
 
-I saw the data analysed it and was sitting on it for some time, then decided to analyse the whole thing along with other interesting factoids such as yearly and surname wise variation.
+so I had some spare time this weekend and  decided to analyse the whole thing along with other interesting factoids such as gender,religion,year-wise and surname wise variation.
 
 
-#Key issues discussed in this article will be   :
+#Key issues   :
 
 1. *Are girls and Muslims given higher marks in interview ? Does this trend hold true across various years?*
 2. *Do the various categories differ in marks awarded ?*
@@ -30,10 +34,10 @@ I saw the data analysed it and was sitting on it for some time, then decided to 
 
 # Data Extraction
 
-2013,2014,2015,2016 UPSC list of candidates with categories were collected. 
+2013,2014,2015,2016 UPSC list of candidates with categories were collected from Internet.
 2015 list was pdf only,hence was extracted back to text then csv
 surnames were extracted with Regex
-The code for extraction and csv can be found here and here
+The code for extraction and csv file of data can be found [here](https://github.com/anupamsingh81/upsc/blob/master/DataExtraction.R) and [here](https://github.com/anupamsingh81/upsc/blob/master/upm.csv)
 Gender status and religion status was coded by hand after evaluation of data.
 
 ```{r,include=FALSE}
@@ -42,6 +46,10 @@ library(tidyverse)
 ```
 
 
+
+# Distribution of Marks 
+
+##Table of year-wise marks across categories
 
 **First we will look at average distribution of marks in Caste categories and percentage of Muslims and females in them**
 
@@ -59,7 +67,7 @@ knitr::kable(a)
 
 Thus we see  percentage of Muslims is between 3-4% in UPSC selected candidates, interestingly **percentage of Muslim OBC is higher than general OBC**. Expectedly Muslim percentage in Sc is zero as different religions can be given SC status , while ST classification depends upon regions and hence 3.54% Muslims there as well.
 
-What is obvious here is inspite of protestations Muslims are under-represented in UPSC pool.
+What is obvious here is inspite of protestations <span style="color:red"> Muslims are under-represented in UPSC pool</span>
 
 **Female representation is best in General group at 20%, while in OBC it is lowest 10.28% even lower than SC group which is surprising to say the least**
 
@@ -77,7 +85,7 @@ b=upm  %>%  group_by(caste,year) %>% summarise(n=n(),marks=round(mean(Total),0),
 knitr::kable(b)
 ```
 
-
+##year-wise gender and religious representation
 **Let's Plot  Muslim representation community wise**
 ```{r}
 
@@ -106,6 +114,10 @@ annotate("text",x=2013.5,y=round(100*mean(upm$Gender),2),label="Average Female \
 
 So we saw that OBCs have poor female representation and slightly higher Muslim representation than general category
 
+##Simpson's Paradox
+
+###Written Marks
+
 Let's look at the histogram of all Written marks across the years.
 
 ```{r}
@@ -126,7 +138,7 @@ ggplot(upm,aes(x=Written,y=..density..))+geom_histogram(fill="orange")+
 
 ```
 
-So, the fairly symmetrical curve becomes almost trimodal with three peaks, what could be the potential cause..
+So, the fairly <span style="color:blue"> symmetrical curve becomes almost trimodal with three peaks</span>, what could be the potential cause..
 Let's investigate further
 
 
@@ -138,11 +150,14 @@ ggplot(upm,aes(x=Written,y=..density..))+geom_histogram(fill="orange")+
 
 So once we plot by year, the plots become symmetric again..How is that?
 a) in 2013 marks were considerably lower than 2016
+
 b) In caste groups we see that general marks distribution is shifted more to right of SC/ST/OBC
 
-Thus we saw how an innocuous looking histogram hid within itself many sub-populations, on eof the few reasons a single measure of central tendency should never be accepted till we see graphical representation of data
+Thus we saw how an innocuous looking histogram hid within itself many sub-populations, on eof the few reasons a single measure of central tendency should never be accepted till we see graphical representation of data.
 
+It is also known as [Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)
 
+###Interview Marks
 Lets plot Interview marks
 
 
@@ -166,7 +181,11 @@ ggplot(upm,aes(x=Interview,y=..density..))+geom_histogram(fill="orange")+
   geom_density(color="black")+facet_wrap(caste~year)
 ```
 
-The histograms and density plots give a lot of insight in the distribution of marks,
+The histograms and density plots give a lot of insight in the distribution of marks.
+
+#Time-series
+
+##Category-wise Variation
 
 **Let's Plot  Interview marks community wise**
 ```{r}
@@ -195,6 +214,8 @@ labs(color="Category")
 ```
 
 Average Written Marks have *gone up* in all categories across in usual order.
+
+##Religion-wise variation
 
 
 ```{r}
@@ -265,6 +286,7 @@ labs(color="Category")
 
 Again,here as well-there is no difference in Written scores(as the mark sheets are blinded) and hence the **better performance in top group was driven entirely by better performance in interview**
 
+##Gender-wise Variation
 
 Lets see corresponding graphs for females in **Written category**
 ```{r}
@@ -333,6 +355,7 @@ labs(color="Category")
 **We see in top rankers difference is lesser and even that closed down in 2016 c.f. performance of Muslim community**.
 Lets' examine this association statistically.
 
+# Correlation between Interview and Written marks
 First let's look at relationship between Interview and Written marks
 
 ```{r}
@@ -385,6 +408,8 @@ Lets look at it in Muslims
 
 On adjusting for Written marks we see that Muslims have only minor difference with Non-Muslims,However in 2016 we can see that among higher marks there is a clear divergence indicating higher marks for Muslim candidates.
 
+#Statistical Model
+
 Let's now do a formal statistical test . Let's consider Interview marks as dependent variable,predicted by indivisual's caste,gender,religion (in which there are obvious trends)-obviously though the model is flawed as all models are as it doesnt have measure of innate ability of participant, but it helps us in controlling for gender,caste n religion difference in candidate as well as yearly variation.I have avoided taking year 2013 as there was significant ~100 point shift in written marks there..
 
 
@@ -414,7 +439,14 @@ We see that while in *top rankers there is a much lesser difference in interview
 g= lm(Interview~Written.c+Gender+caste+Muslim+factor(year),data=filter(upm,year<2016,Rank<500))
 summary(g)
 ```
-We see that **even when we exclude 2016 (as one-ogff random event), being a Muslim definitely provides upto 10 point advantage in interview process in top rankers** and is infact the most significant of predictive factors excluding systematic yearly variations.
+We see that **even when we exclude 2016 (as one-off random event), being a Muslim definitely provides upto 10 point advantage in interview process in top rankers** and is infact the most significant of predictive factors excluding systematic yearly variations.
+
+#Note
+<span style="color:red">We must also note that even though there is category wise variation in Interview marks in caste as well, this difference is seen in written marks as well, However in case of Female and Muslim candidates those having similar marks in written perform better in Interview indicating potential bias.
+Further, while the interview marks advantage for females diminishes at top ranks(<500),it increases for Muslim candidates.
+However, it should be noted that Female candidates and Muslim candidates are vastly under-represented than their population levels.
+One of the points of this analysis is if these candidates are being favored and this analysis shows that they are,then whole process should be open.</span>
+
 
 
 Lets do some fun analysis now..
@@ -461,7 +493,7 @@ Let's look at which surnames have best ranks
   xlab("Surname")
 
 ```
-We see that the best ranks are secured by brahmin ,bania communities event though absolute numbers may be varibale
+We see that the best ranks are secured by brahmin ,bania communities event though absolute numbers may be variable
 
 
 Which community/surname(except kumari) has best female representation..lets see
@@ -531,9 +563,9 @@ Let's look at OBC community
   xlab("Surname")
 ```
 
-We see that apart from generic kumar and singh surnames , Yadav and Patels from North India are capturing lot of OBC seats, however the story here is that many south indian candidates(with single letter surnames) are dominant in OBC community
+We see that apart from generic kumar and singh surnames , Yadav and Patels from North India are capturing lot of OBC seats, however the story here is that <span style="color:blue">many south indian candidates(with single letter surnames) are dominant in OBC community</span>
 
-Lets examine Sc community
+Lets examine SC community
 
 
 ```{r}
@@ -551,7 +583,7 @@ Lets examine Sc community
 We see that while most SC prefer kumar,singh and even verma titles..many south indian surname and hence candidates take these benefits.
 
 
-Thus, on the whole in General category -Northern Communitites predominate,while in OBC and Sc groups South Indian surnames are well represented. In ST group MEENA community captures most of the seats.
+Thus, <span style="color:red">on the whole in General category -Northern Communitites predominate,while in OBC and Sc groups South Indian surnames are well represented. In ST group MEENA community captures most of the seats.</span>
 
 Here is a list of summary statistics by surnames
 
@@ -572,7 +604,7 @@ head(n=15)
 
 ```
 
-#Repeater analysis
+**Repeater analysis**
 
 Let's lookat names which repeat through various years(while it is true people with same names can get selected again,lesser probbaility that it happens on continuous years,in any case with limited resources-it is slight overestimation of repeater count
 
@@ -608,10 +640,10 @@ round(100*(length(top_ranker)/length(repeater)),2)
 ```
 or around 16%.
 
-Thus around 15% selected people end up repeating and only 15% of these determined ones end up getting top 100 ranks-who said UPSC was an easy exam! It takes a lot to be a Babu..:-)
+Thus around <span style="color:orange">15% selected people end up repeating and only 15% of these determined ones end up getting top 100 ranks</span>.who said UPSC was an easy exam! It takes a lot to be a Babu..:-)
 
 
-## Key Takeaways
+# Key Takeaways
 
 1.**Being a  Female or a Muslim confers advantage in Interview process which is minor(5 marks)since whole Interview is of 275 marks however muslim candidates show an increasing trend of higher marks(10) at top ranks so there is some evidence of deliberate grade inflation**
 
