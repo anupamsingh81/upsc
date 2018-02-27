@@ -1,0 +1,632 @@
+---
+title: "UPSC"
+author: "Anupam kumar Singh, MD"
+date: "26 February 2018"
+output: 
+  html_document:
+   code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                       warning=FALSE, message=FALSE)
+```
+
+
+Sometime back UPSC 2016 results were declared and amidst usual hype and hoopla, a blog post bty twitter handle yugaparivatan [claimed](http://yugaparivartan.com/2017/06/03/does-upsc-favours-muslims-in-ias-interview/), that higher interview marks were awarded to Muslims . Some people insinuated same was happening for female candidates and wondered if it was by design or random event. 
+
+I saw the data analysed it and was sitting on it for some time, then decided to analyse the whole thing along with other interesting factoids such as yearly and surname wise variation.
+
+
+#Key issues discussed in this article will be   :
+
+1. *Are girls and Muslims given higher marks in interview ? Does this trend hold true across various years?*
+2. *Do the various categories differ in marks awarded ?*
+3. *How many percent girls get through UPSC in total and community wise*
+4. *Which surnames/castes dominate UPSC selected candidate list*
+5. *Have some caste/Surnames become super-privileged in specific category?*
+6. *What is the trend of interview and written marks across the years?*
+
+
+# Data Extraction
+
+2013,2014,2015,2016 UPSC list of candidates with categories were collected. 
+2015 list was pdf only,hence was extracted back to text then csv
+surnames were extracted with Regex
+The code for extraction and csv can be found here and here
+Gender status and religion status was coded by hand after evaluation of data.
+
+```{r,include=FALSE}
+upm=read.csv('upm.csv',stringsAsFactors = FALSE)
+library(tidyverse)
+```
+
+
+
+**First we will look at average distribution of marks in Caste categories and percentage of Muslims and females in them**
+
+
+```{r}
+a=upm  %>% group_by(caste) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0),
+                                       Muslims_percentage=round(100*mean(Muslim),2),
+                   Females_percentage=round(100*mean(Gender),2)) 
+
+library(knitr)
+knitr::kable(a)
+
+```
+
+Thus we see  percentage of Muslims is between 3-4% in UPSC selected candidates, interestingly **percentage of Muslim OBC is higher than general OBC**. Expectedly Muslim percentage in Sc is zero as different religions can be given SC status , while ST classification depends upon regions and hence 3.54% Muslims there as well.
+
+What is obvious here is inspite of protestations Muslims are under-represented in UPSC pool.
+
+**Female representation is best in General group at 20%, while in OBC it is lowest 10.28% even lower than SC group which is surprising to say the least**
+
+**Interview and written marks follow the general order General>OBC>SC>ST except in case of Interview where ST secure higher marks than SC(we shall examine this in a moment.)**
+
+General category candidates have better rank , but as we know that there is quota wise representation in each service and separate list for each categories
+
+Lets see the whole data year-wise
+
+```{r}
+b=upm  %>%  group_by(caste,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0),
+                                       Muslims_percentage=round(100*mean(Muslim),2),
+                   Females_percentage=round(100*mean(Gender),2)) 
+knitr::kable(b)
+```
+
+
+**Let's Plot  Muslim representation community wise**
+```{r}
+
+ggplot(b,aes(x=year,y=Muslims_percentage,color=caste,group=caste))+geom_line()+
+  geom_hline(yintercept =round(100*mean(upm$Muslim),2) ,color="red",linetype="dashed")+
+  annotate("text",x=2015.5,y=round(100*mean(upm$Muslim),2),label="Average Muslim \n Representation %")+
+  labs(color="Category")
+
+
+
+```
+
+
+**Let's Plot  Female Representation Community wise**
+```{r}
+ggplot(b,aes(x=year,y=Females_percentage,color=caste,group=caste))+geom_line()+
+   
+   geom_hline(yintercept =round(100*mean(upm$Gender),2) ,color="red",linetype="dashed")+
+  
+annotate("text",x=2013.5,y=round(100*mean(upm$Gender),2),label="Average Female \n Representation %")+
+    labs(color="Category")
+
+
+```
+
+
+So we saw that OBCs have poor female representation and slightly higher Muslim representation than general category
+
+Let's look at the histogram of all Written marks across the years.
+
+```{r}
+ggplot(upm,aes(x=Written,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")
+
+```
+
+Appears fairly symmetrical. Howver we *know* that caste wise differences exist so let's plot caste wise histogram
+
+
+```{r}
+
+
+ggplot(upm,aes(x=Written,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")+facet_wrap(~caste)
+
+
+```
+
+So, the fairly symmetrical curve becomes almost trimodal with three peaks, what could be the potential cause..
+Let's investigate further
+
+
+```{r}
+
+ggplot(upm,aes(x=Written,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")+facet_wrap(caste~year)
+```
+
+So once we plot by year, the plots become symmetric again..How is that?
+a) in 2013 marks were considerably lower than 2016
+b) In caste groups we see that general marks distribution is shifted more to right of SC/ST/OBC
+
+Thus we saw how an innocuous looking histogram hid within itself many sub-populations, on eof the few reasons a single measure of central tendency should never be accepted till we see graphical representation of data
+
+
+Lets plot Interview marks
+
+
+```{r}
+
+ggplot(upm,aes(x=Interview,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")
+```
+
+
+```{r}
+
+ggplot(upm,aes(x=Interview,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")+facet_wrap(~caste)
+```
+
+
+```{r}
+
+ggplot(upm,aes(x=Interview,y=..density..))+geom_histogram(fill="orange")+
+  geom_density(color="black")+facet_wrap(caste~year)
+```
+
+The histograms and density plots give a lot of insight in the distribution of marks,
+
+**Let's Plot  Interview marks community wise**
+```{r}
+
+
+ggplot(b,aes(x=year,y=Interview,color=caste,group=caste))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Interview),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Interview),2),label="Average Interview Marks")+
+labs(color="Category")
+
+
+
+```
+
+
+**We see that Interview marks have gone down in general category while they have gone up in ST category,general change is down.**
+```{r}
+ggplot(b,aes(x=year,y=Written,color=caste,group=caste))+geom_line()+
+  
+  
+ geom_hline(yintercept =round(mean(upm$Written),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Written),2),label="Average Written Marks")+
+labs(color="Category")
+
+```
+
+Average Written Marks have *gone up* in all categories across in usual order.
+
+
+```{r}
+
+upm  %>% mutate(Muslim=ifelse(Muslim==1,"Muslim","Non-Muslim")) %>%  group_by(Muslim,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Interview,color=factor(Muslim),group=factor(Muslim)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Interview),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Interview),2),label="Average Interview Marks")+
+labs(color="Category")
+
+
+```
+
+We see that **Interview marks in both Muslims and Non-Muslims go down, however Muslims have higher marks(around 5 marks) on average**
+
+
+Now some people alleged that Interview marks inflation was done deliberately in *top ranks(Ranks less than 500)*,So lets see the trend in top rankers
+
+```{r}
+
+upm  %>% filter(Rank<500) %>% mutate(Muslim=ifelse(Muslim==1,"Muslim","Non-Muslim")) %>%  group_by(Muslim,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Interview,color=factor(Muslim),group=factor(Muslim)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Interview),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Interview),2),label="Average Interview Marks")+
+labs(color="Category")
+
+```
+
+In this graph,we can clearly see that while marks have been going down in both groups, in 2016 there is **an uptrend(almost 13 marks higher in top 500 candidates) and that led to higher selection of Muslims in top ranks**. 
+This might be one off event, but in **this year 2016 while interview marks of Muslim candidates on average went down, in top groups it went up against the general trend**..
+
+Lets now examine **Written** Marks
+
+
+```{r}
+
+upm  %>% mutate(Muslim=ifelse(Muslim==1,"Muslim","Non-Muslim")) %>%  group_by(Muslim,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Written,color=factor(Muslim),group=factor(Muslim)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Written),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Written),2),label="Average Written Marks")+
+labs(color="Category")
+
+```
+
+In this graph we clearly see that there is **almost no difference between Muslim and Non-Muslim candidates in UPSC written test**Lets examine top guys under 500
+
+```{r}
+
+upm  %>%filter(Rank<500) %>%  mutate(Muslim=ifelse(Muslim==1,"Muslim","Non-Muslim")) %>%  group_by(Muslim,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Written,color=factor(Muslim),group=factor(Muslim)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Written),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Written),2),label="Average Written Marks")+
+labs(color="Category")
+
+```
+
+Again,here as well-there is no difference in Written scores(as the mark sheets are blinded) and hence the **better performance in top group was driven entirely by better performance in interview**
+
+
+Lets see corresponding graphs for females in **Written category**
+```{r}
+
+upm  %>% mutate(Gender=ifelse(Gender==1,"Female","Male")) %>%  group_by(Gender,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Written,color=factor(Gender),group=factor(Gender)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Written),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Written),2),label="Average Written Marks")+
+labs(color="Category")
+
+```
+
+We see almost no difference here as opposed to Interview marks
+
+Now in top candidates
+```{r}
+
+upm  %>% filter(Rank<500) %>%  mutate(Gender=ifelse(Gender==1,"Female","Male")) %>%  group_by(Gender,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Written,color=factor(Gender),group=factor(Gender)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Written),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Written),2),label="Average Written Marks")+
+labs(color="Category")
+
+```
+
+Here as well , there is no difference
+
+Let's see Interview Scores Now
+
+```{r}
+
+upm  %>% mutate(Gender=ifelse(Gender==1,"Female","Male")) %>%  group_by(Gender,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Interview,color=factor(Gender),group=factor(Gender)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Interview),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Interview),2),label="Average Interview Marks")+
+labs(color="Category")
+
+```
+
+Now it appears being a female confers an advantage of almost 5 points in interview..
+
+Let's analyse it in top rankers
+
+```{r}
+
+upm  %>%filter(Rank<500) %>%  mutate(Gender=ifelse(Gender==1,"Female","Male")) %>%  group_by(Gender,year) %>% summarise(n=n(),marks=round(mean(Total),0),Written=round(mean(Written),0),
+                                       Interview=round(mean(Interview),0),Rank=round(mean(Rank),0)) %>% 
+
+ggplot(aes(x=year,y=Interview,color=factor(Gender),group=factor(Gender)))+geom_line()+
+  
+ geom_hline(yintercept =round(mean(upm$Interview),2) ,color="red",linetype="dashed")+
+annotate("text",x=2013.5,y=round(mean(upm$Interview),2),label="Average Interview Marks")+
+labs(color="Category")
+
+```
+
+**We see in top rankers difference is lesser and even that closed down in 2016 c.f. performance of Muslim community**.
+Lets' examine this association statistically.
+
+First let's look at relationship between Interview and Written marks
+
+```{r}
+
+ 
+ upm %>% ggplot(aes(x=Interview,y=Written))+
+  geom_jitter(color="red")+
+   stat_smooth(method="lm",se=FALSE)
+ 
+```
+
+We see that there is a predominatly *negative relationship.* Does this relationship hold across years. Let's see..
+
+
+```{r}
+
+ upm %>% ggplot(aes(x=Interview,y=Written))+
+  geom_jitter(color="red")+
+   stat_smooth(method="lm",se=FALSE)+
+  facet_wrap(~year)
+ 
+```
+
+We can see the relationship holds but degrees vary. It is expected as well as those who do very well in Written , might be introvert and perform worse in Interview..
+
+
+Let's see if this relationship holds in females as well.
+
+```{r}
+
+ upm %>% mutate(Gender=ifelse(Gender==1,"Female","Male")) %>% ggplot(aes(x=Interview,y=Written,color=Gender))+
+  geom_jitter()+
+   stat_smooth(method="lm",se=FALSE)+
+  facet_wrap(~year)
+ 
+```
+
+Well it does across years.though Females tend to score higher 
+
+Lets look at it in Muslims
+
+```{r}
+
+ upm %>% mutate(Muslim=ifelse(Muslim==1,"Muslim","Non-Muslim")) %>% ggplot(aes(x=Interview,y=Written,color=Muslim))+
+  geom_jitter()+
+   stat_smooth(method="lm",se=FALSE)+
+  facet_wrap(~year)
+ 
+```
+
+On adjusting for Written marks we see that Muslims have only minor difference with Non-Muslims,However in 2016 we can see that among higher marks there is a clear divergence indicating higher marks for Muslim candidates.
+
+Let's now do a formal statistical test . Let's consider Interview marks as dependent variable,predicted by indivisual's caste,gender,religion (in which there are obvious trends)-obviously though the model is flawed as all models are as it doesnt have measure of innate ability of participant, but it helps us in controlling for gender,caste n religion difference in candidate as well as yearly variation.I have avoided taking year 2013 as there was significant ~100 point shift in written marks there..
+
+
+```{r}
+f= lm(Interview~Written.c+Gender+caste+Muslim+factor(year),data=filter(upm,year>2013))
+summary(f,digits=2)
+```
+
+*The analysis shows that for an averal General candidate in year 2014 as base , had 179 marks in interview, every 10 increasein written marks would decrease his interview marks by 1.2, Being of female gender would increase the mark by 4, OBC,SC and ST have around 10,13,14 lower point than general candidates,while being a Muslim adds around 6 marks to interview score. 2013 was alow score year There are yearly 6 points in subsequent years*
+
+However it must be noted that since we dont have other measures of innate ability of students the predictive perrobability of model is poor despite controlling for confounders.
+
+Lets do the same analysis in top rankers
+
+```{r}
+
+g= lm(Interview~Written.c+Gender+caste+Muslim+factor(year),data=filter(upm,year>2013,Rank<500))
+summary(g)
+```
+
+We see that while in *top rankers there is a much lesser difference in interview marks between general and OBC/SC/ST candidates and even in females*, however intrestingly the **advantage of being a Muslim is amplified in these top rankers and gives an advantage of upto 10 marks even on controlling for other variables and points to some evidence of deliberate grade inflation in interview marks based on religion** Lets run this analysis without controversial year 2016
+
+
+
+```{r}
+
+g= lm(Interview~Written.c+Gender+caste+Muslim+factor(year),data=filter(upm,year<2016,Rank<500))
+summary(g)
+```
+We see that **even when we exclude 2016 (as one-ogff random event), being a Muslim definitely provides upto 10 point advantage in interview process in top rankers** and is infact the most significant of predictive factors excluding systematic yearly variations.
+
+
+Lets do some fun analysis now..
+
+##Surname Analysis
+
+
+I extracted last names of candidates with regex and now lets see which surnames dominate UPSC list
+
+```{r}
+ 
+ upm  %>% group_by(surname) %>% 
+  summarise(n=n()) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%head(n=15)
+
+```
+We see while generic surnames like KUMAR and SINGH dominate the scene, what is surprising is MEENA comminity which comes in ST has almost 113 seats higher than communities like sharma,gupta etc
+
+Let's plot it
+
+```{r}
+
+ upm   %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>15) %>% 
+  ggplot(aes(x=reorder(surname,n),y=n))+geom_bar(stat="identity",fill="blue")+
+  
+  coord_flip()+
+  xlab("Surname")
+
+```
+
+Let's look at which surnames have best ranks
+
+```{r}
+
+ upm   %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>15) %>% 
+  ggplot(aes(x=reorder(surname,desc(Rank)),y=Rank))+geom_bar(stat="identity",fill="blue")+
+  coord_flip()+
+  xlab("Surname")
+
+```
+We see that the best ranks are secured by brahmin ,bania communities event though absolute numbers may be varibale
+
+
+Which community/surname(except kumari) has best female representation..lets see
+
+
+```{r}
+
+ upm   %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank),Female_percentage=round(100*mean(Gender),2)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>15) %>% 
+  ggplot(aes(x=reorder(surname,Female_percentage),y=Female_percentage))+geom_bar(stat="identity",fill="blue")+
+     geom_hline(yintercept =round(100*mean(upm$Gender),2) ,color="red",linetype="dashed")+
+  annotate("text",x=2,y=round(100*mean(upm$Gender),2),label="Average Female \n Representation (15.9) %")+
+
+
+  coord_flip()+
+  xlab("Surname")
+```
+
+We see that Baniyas(guptas)and some brahmins and some south indian communities(represnted by single surnames like S,C,A,B,J,K) have high above average female representation
+
+Lets look inside communities. 
+First look at General community
+
+```{r}
+
+  upm   %>% filter(caste=="General") %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>15) %>% 
+  ggplot(aes(x=reorder(surname,n),y=n))+geom_bar(stat="identity",fill="orange")+
+  
+  coord_flip()+
+  xlab("Surname")
+
+```
+
+
+Lets lookat ST community
+
+```{r}
+
+  upm   %>% filter(caste=="ST") %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>4) %>% 
+  ggplot(aes(x=reorder(surname,n),y=n))+geom_bar(stat="identity",fill="orange")+
+  
+  coord_flip()+
+  xlab("Surname")
+```
+
+What is clearly evident here is that MEENA group is an anomaly in this population and sort of super-elite which is cornering most of benefits reserved for ST.
+
+Let's look at OBC community
+
+```{r}
+
+  upm   %>% filter(caste=="OBC") %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>5) %>% 
+  ggplot(aes(x=reorder(surname,n),y=n))+geom_bar(stat="identity",fill="orange")+
+  
+  coord_flip()+
+  xlab("Surname")
+```
+
+We see that apart from generic kumar and singh surnames , Yadav and Patels from North India are capturing lot of OBC seats, however the story here is that many south indian candidates(with single letter surnames) are dominant in OBC community
+
+Lets examine Sc community
+
+
+```{r}
+
+  upm   %>% filter(caste=="SC") %>% group_by(surname) %>% 
+  summarise(n=n(),Rank=mean(Rank)) %>% mutate(proportion=round(100*(n/sum(n)),2)) %>% 
+   arrange(desc(n)) %>%
+  filter(n>5) %>% 
+  ggplot(aes(x=reorder(surname,n),y=n))+geom_bar(stat="identity",fill="orange")+
+  
+  coord_flip()+
+  xlab("Surname")
+```
+
+We see that while most SC prefer kumar,singh and even verma titles..many south indian surname and hence candidates take these benefits.
+
+
+Thus, on the whole in General category -Northern Communitites predominate,while in OBC and Sc groups South Indian surnames are well represented. In ST group MEENA community captures most of the seats.
+
+Here is a list of summary statistics by surnames
+
+```{r}
+
+upm %>% group_by(surname) %>% 
+  summarize_at(vars(Total,Rank,Interview,Written,Gender),funs(mean,n=n())) %>% arrange(desc(Total_n)) %>% 
+  rename(count=Total_n) %>% 
+  select(-Rank_n,-Interview_n,-Written_n,-Gender_n) %>% 
+  filter(count>4) %>% 
+  arrange(Rank_mean) %>% mutate(Female_percentage = round(100*Gender_mean,2)) %>% 
+  mutate(proportion=round(100*(count/sum(count)),2)) %>% 
+  mutate(Female_total = round(Female_percentage*count/100,0)) %>% 
+    select(-Gender_mean) %>% 
+   #arrange(desc(Female_total))
+ arrange(desc(proportion)) %>% 
+head(n=15)
+
+```
+
+#Repeater analysis
+
+Let's lookat names which repeat through various years(while it is true people with same names can get selected again,lesser probbaility that it happens on continuous years,in any case with limited resources-it is slight overestimation of repeater count
+
+
+```{r}
+ repeater= upm %>% group_by(Name) %>% summarize(n=n()) %>% filter(n>1) %>%  pull(Name) 
+
+
+```
+
+The number of repeater is 697.So the percentage of people who repeat out of total 4535 candidates is ~
+
+```{r}
+round(100*(length(repeater)/length(upm$Name)),2)
+```
+
+Thus proportion of repeaters is around 15%
+
+So what percentage of repeaters eventually end up getting a top 100 rank..
+Lets's calculate
+
+```{r}
+ top_ranker =upm %>% filter(Name %in% repeater) %>% filter(Rank<100) %>% pull(Name) 
+
+```
+
+The number of top ranker out of these repeaters is 111.
+
+So the percent of repeaters who end up as top ranker is 111/697 
+
+```{r}
+round(100*(length(top_ranker)/length(repeater)),2)
+```
+or around 16%.
+
+Thus around 15% selected people end up repeating and only 15% of these determined ones end up getting top 100 ranks-who said UPSC was an easy exam! It takes a lot to be a Babu..:-)
+
+
+## Key Takeaways
+
+1.**Being a  Female or a Muslim confers advantage in Interview process which is minor(5 marks)since whole Interview is of 275 marks however muslim candidates show an increasing trend of higher marks(10) at top ranks so there is some evidence of deliberate grade inflation**
+
+2.**General candidates get bettter marks than OBC,SC,ST in that order in Interview process,however this advantage doesnt hold up in top ranks**
+
+3.**Baniyas(Gupta,Agarwal) in particular get the best mean ranks and have highest female representation almost double the national average, arguably one of the most developed communities in India**
+
+4.**Female representation in SC is higher than OBCs**
+
+5.**MEENA community captures most of the seats in ST community and is a cause of concern**
+
+6.**Higher marks are inversely correlated with Interview marks.A person with 100 more written marks than average is likely to get 10 less marks in an Interview**
+
+7**Muslims iand Females are under-represented in UPSC list, However in my personal opinion covert grade inflation is not the solution as will backfire, we need open and transparent policy to increase their representation(eg. opening more schools in Muslim dominated areas rather than specific quota)**
+
+8**South Indian Community are better represented in OBC and SC list(understandable since despite advanced demographics on almost every parameters few people let go of the advantage of quotas), however in General list North Indian communities dominate**
+
+
